@@ -1,7 +1,7 @@
 {% extends 'base.html.twig' %}
 {% block stylesheets %}
 <style>
-form#exercices {
+form#exercises {
     font-size: 50px;
     margin-left: 33%;
     width: 30%;
@@ -42,7 +42,7 @@ form#exercices {
     <input id="clear" type="radio" name="clear" value="no">No</input><br/>
 </div>
 <p></p>
-<form id="exercices">
+<form id="exercises">
 </form>
 <div id="results">
     <span id="countTrue"><strong>0</strong> True</span>
@@ -61,33 +61,33 @@ form#exercices {
         $("option[value='both']").prop("selected", true);
         $("#times").val(10);
         $("#clear[value=no]").prop("checked", true);
-        $.get("/exercices/both/10", function(data) {
+        $.get("/exercises/both/10", function(data) {
             data = createForm(data);
         });
     });
 
     $("#syllabary").on("change", function(event) {
-        $.get("/exercices/" + $(this).val() + "/" + $("#times").val(), function(data) {
+        $.get("/exercises/" + $(this).val() + "/" + $("#times").val(), function(data) {
             ( $("#clear:checked").val() == "yes" ? createForm(data) : reloadForm() );
         });
         event.preventDefault();
     });
 
     $("#times").on("change", function(event) {
-        $.get("/exercices/" + $("#syllabary").val() + "/" + $(this).val(), function(data) {
+        $.get("/exercises/" + $("#syllabary").val() + "/" + $(this).val(), function(data) {
             ( $("#clear:checked").val() == "yes" ? createForm(data) : reloadForm() );
         });
         event.preventDefault();
     });
 
     $("#go").on("click", function(event) {
-        $.get("/exercices/" + $("#syllabary").val() + "/" + $("#times").val(), function(data) {
+        $.get("/exercises/" + $("#syllabary").val() + "/" + $("#times").val(), function(data) {
             ( $("#clear:checked").val() == "yes" ? createForm(data) : reloadForm() );
         });
         event.preventDefault();
     });
     
-    $(document).on("change", ".exercice", function(event) {
+    $(document).on("change", ".exercise", function(event) {
         (
             $(this).val() == $(this).next("input[type=hidden]").val() ?
                 $(this).attr("data-ctrl", true)
@@ -99,7 +99,7 @@ form#exercices {
                         .children("label").css({"color" : "white", "font-weight" : "bold"})
         );
         
-        var last = $("input.exercice").last();
+        var last = $("input.exercise").last();
         
         //If last element of form, check all inputs
         if ($(this).is(last)) {
@@ -111,10 +111,10 @@ form#exercices {
     
     $(document).on("click", ".showAnswer", function(event) {
         $(this).before("<label>" + $(this).siblings(".answer").attr("value") + "</label>");
-        $(this).siblings(".exercice").attr("data-ctrl", true)
+        $(this).siblings(".exercise").attr("data-ctrl", true)
                     .parent().css("background-color", "#FA5858")
                         .children("label").css({"color" : "white", "font-weight" : "bold"})
-        $(this).parent().children(".exercice").remove();
+        $(this).parent().children(".exercise").prop("disabled", true);
         $(this).remove();
         var oldCount = $("#countFalse").children("strong").html();
         $("#countFalse").children("strong").html(++oldCount);
@@ -123,17 +123,17 @@ form#exercices {
     
     $("#times").on("keyup", function(e) {
         if (e.keyCode === 13) { // Enter
-        $.get("/exercices/" + $("#syllabary").val() + "/" + $("#times").val(), function(data) {
+        $.get("/exercises/" + $("#syllabary").val() + "/" + $("#times").val(), function(data) {
             ( $("#clear:checked").val() == "yes" ? createForm(data) : reloadForm() );
         });
        }
     });
-    $(document).on("keypress", ".exercice", function(e) {
+    $(document).on("keypress", ".exercise", function(e) {
        if (e.keyCode === 13) { // Disable Enter in form
            return false;
        } 
     });
-    $(document).on("keyup", ".exercice", function(e) {
+    $(document).on("keyup", ".exercise", function(e) {
        if (e.keyCode === 13) { // Reload form after disabling Enter
         (
             $(this).val() == $(this).next("input[type=hidden]").val() ?
@@ -148,7 +148,7 @@ form#exercices {
            reloadForm();
        } 
     });
-    $(document).on("keypress", ".exercice:last", function(e) {
+    $(document).on("keypress", ".exercise:last", function(e) {
         e.preventDefault();
         if (e.keyCode === 9) { // Tab
            reloadForm();
@@ -160,23 +160,23 @@ form#exercices {
     
     function createForm(data, clear=true) {
         if (clear == true) { // Default : removes all previous elements in form
-            $("#exercices").empty();
+            $("#exercises").empty();
         }
         for (char in data) {
             var line = "<fieldset style='border:none'>";
             line += "<label>" + char + "</label>&nbsp;&nbsp;";
             line += "<button class='showAnswer' tabindex='1' style='float:right'>Answer</button>";
-            line += "<input class='exercice' type='text' data-ctrl='false'>";
+            line += "<input class='exercise' type='text' data-ctrl='false'>";
             line += "<input class='answer' type='hidden' value='"+data[char]+"'/><br/>";
             line += "</fieldset>";
-            $("#exercices").append(line);
+            $("#exercises").append(line);
         }
     }
     
     function reloadForm() {
         countTrueAnswers();
-        var remains = $("input.exercice").length;
-        $("input.exercice").each(function(idx, el) {
+        var remains = $("input.exercise").length;
+        $("input.exercise").each(function(idx, el) {
             if ($(el).attr("data-ctrl") == "true") { // If good answer
                 $(el).parent().fadeOut(); // Remove element
                 $(el).parent().remove();
@@ -186,20 +186,20 @@ form#exercices {
         if (remains < $("#times").val()) {
             diff = $("#times").val() - remains
             if (diff > 0) { // If there's less elements than asked
-                $.get("/exercices/" + $("#syllabary").val() + "/" + diff, function(data) {
+                $.get("/exercises/" + $("#syllabary").val() + "/" + diff, function(data) {
                     data = createForm(data, false); // Reload sufficient elements to fulfill request
                 });
             }
         }
         setTimeout(function() {
             window.scrollTo(0,0);
-            $("input.exercice:first").focus(); 
+            $("input.exercise:first").focus(); 
         }, 1);
     }
     
     function countTrueAnswers() {
         var count = $("#countTrue").children("strong").html();
-        $(".exercice").each(function(idx, el) {
+        $(".exercise").each(function(idx, el) {
             if ($(el).attr("data-ctrl") == "true") { // If good answer
                 count++;
             }

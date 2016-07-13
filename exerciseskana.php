@@ -16,11 +16,11 @@ if (preg_match("/\/public\/.+/", $_SERVER['REQUEST_URI'])) { // If contains rout
     }
 }
 
-$app->get("/exercicesKana", function() use ($app) {
-    return $app['twig']->render('exercicesKana.html.twig');
+$app->get("/exercisesKana", function() use ($app) {
+    return $app['twig']->render('exercisesKana.html.twig');
 });
 
-$app->get("/exercices/{kana}/{times}", function($kana, $times) use ($app) {
+$app->get("/exercises/{kana}/{times}", function($kana, $times) use ($app) {
     switch($kana) {
         case "hiragana" : $file = file_get_contents("resources/hiragana.csv"); break;
         case "katakana" : $file = file_get_contents("resources/katakana.csv"); break;
