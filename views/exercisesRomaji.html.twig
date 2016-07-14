@@ -25,15 +25,27 @@ form#exercises {
     color: white;
     padding: 5px;
 }
+#listCharSyllabary {
+    display: none;
+    background-color: white;
+    z-index: 150;
+    position: fixed;
+    font-size: 40px;
+    width: 45%;
+    height: 51%;
+    top: 50%;
+    left: 50%;
+    margin-top: -15%; /* Negative half of height. */
+    margin-left: -25%; /* Negative half of width. */
+}
 </style>
 {% endblock %}
 {% block body %}
-<h2>Training : kana to romaji</h2>
+<h2>Training : romaji to kana</h2>
 <div display="inline:block">
-    <select id="syllabary" name="syllabary">
-        <option value="hiragana">Hiragana</option>
-        <option value="katakana">Katakana</option>
-        <option value="both" selected="selected">Both</option>
+    <select id="exerciseType" name="exerciseType">
+        <option value="romaji2hiragana">Hiragana</option>
+        <option value="romaji2katakana">Katakana</option>
     </select>
     <input id="times" type="text" value="10" name="times" size="1"></input>
     &nbsp;&nbsp;<button id="go">Go</button><br/>
@@ -42,6 +54,8 @@ form#exercises {
     <input id="clear" type="radio" name="clear" value="no">No</input><br/>
 </div>
 <p></p>
+<div id="listCharSyllabary">
+</div>
 <form id="exercises">
 </form>
 <div id="results">
@@ -58,15 +72,17 @@ form#exercises {
     /* ******************* */
 
     $(document).ready(function() {
-        $("option[value='both']").prop("selected", true);
+        $("option[value='romaji2hiragana']").prop("selected", true);
         $("#times").val(10);
         $("#clear[value=no]").prop("checked", true);
-        $.get("/exercises/both/10", function(data) {
+        $.get("/exercises/romaji2hiragana/10", function(data) {
             createForm(data);
         });
+        var syllabary = getSyllabary($("#exerciseType").val());
+        $("#listCharSyllabary").html(syllabary);
     });
 
-    $("#syllabary").on("change", function(event) {
+    $("#exerciseType").on("change", function(event) {
         $.get("/exercises/" + $(this).val() + "/" + $("#times").val(), function(data) {
             ( $("#clear:checked").val() == "yes" ? createForm(data) : reloadForm() );
         });
@@ -74,40 +90,40 @@ form#exercises {
     });
 
     $("#times").on("change", function(event) {
-        $.get("/exercises/" + $("#syllabary").val() + "/" + $(this).val(), function(data) {
+        $.get("/exercises/" + $("#exerciseType").val() + "/" + $(this).val(), function(data) {
             ( $("#clear:checked").val() == "yes" ? createForm(data) : reloadForm() );
         });
         event.preventDefault();
     });
 
     $("#go").on("click", function(event) {
-        $.get("/exercises/" + $("#syllabary").val() + "/" + $("#times").val(), function(data) {
+        $.get("/exercises/" + $("#exerciseType").val() + "/" + $("#times").val(), function(data) {
             ( $("#clear:checked").val() == "yes" ? createForm(data) : reloadForm() );
         });
         event.preventDefault();
     });
     
-    $(document).on("change", ".exercise", function(event) {
-        (
-            $(this).val() == $(this).next("input[type=hidden]").val() ?
-                $(this).attr("data-ctrl", true)
-                    .parent().css("background-color", "#2EFE64")
-                        .children("label").css({"color" : "black", "font-weight" : ''})
-            :
-                $(this).attr("data-ctrl", false)
-                    .parent().css("background-color", "#FA5858")
-                        .children("label").css({"color" : "white", "font-weight" : "bold"})
-        );
+    //$(document).on("change", ".exercise", function(event) {
+        //(
+            //$(this).val() == $(this).next("input[type=hidden]").val() ?
+                //$(this).attr("data-ctrl", true)
+                    //.parent().css("background-color", "#2EFE64")
+                        //.children("label").css({"color" : "black", "font-weight" : ''})
+            //:
+                //$(this).attr("data-ctrl", false)
+                    //.parent().css("background-color", "#FA5858")
+                        //.children("label").css({"color" : "white", "font-weight" : "bold"})
+        //);
         
-        var last = $("input.exercise").last();
+        //var last = $("input.exercise").last();
         
-        //If last element of form, check all inputs
-        if ($(this).is(last)) {
-            reloadForm();
-        }
+        ////If last element of form, check all inputs
+        //if ($(this).is(last)) {
+            //reloadForm();
+        //}
         
-        event.preventDefault();
-    });
+        //event.preventDefault();
+    //});
     
     $(document).on("click", ".showAnswer", function(event) {
         $(this).before("<label>" + $(this).siblings(".answer").attr("value") + "</label>");
@@ -123,7 +139,7 @@ form#exercises {
     
     $("#times").on("keyup", function(e) {
         if (e.keyCode === 13) { // Enter
-        $.get("/exercises/" + $("#syllabary").val() + "/" + $("#times").val(), function(data) {
+        $.get("/exercises/" + $("#exerciseType").val() + "/" + $("#times").val(), function(data) {
             ( $("#clear:checked").val() == "yes" ? createForm(data) : reloadForm() );
         });
        }
@@ -162,6 +178,7 @@ form#exercises {
         if (clear == true) { // Default : removes all previous elements in form
             $("#exercises").empty();
         }
+        
         for (char in data) {
             var line = "<fieldset style='border:none'>";
             line += "<label>" + char + "</label>&nbsp;&nbsp;";
@@ -186,7 +203,7 @@ form#exercises {
         if (remains < $("#times").val()) {
             diff = $("#times").val() - remains
             if (diff > 0) { // If there's less elements than asked
-                $.get("/exercises/" + $("#syllabary").val() + "/" + diff, function(data) {
+                $.get("/exercises/" + $("#exerciseType").val() + "/" + diff, function(data) {
                     createForm(data, false); // Reload sufficient elements to fulfill request
                 });
             }
@@ -205,6 +222,35 @@ form#exercises {
             }
         });
         $("#countTrue").children("strong").html(count);
+    }
+    
+    function getSyllabary() {
+        var str = $("#exerciseType").val();
+        var syllabary = str.substr(str.indexOf("2") + 1);
+        var list = "<table>";
+        $.ajax({
+           'type': "GET",
+           'async': false,
+           'url': "/syllabary/" + syllabary,
+           'success': function(data) {
+                for (var i in data) {
+                    if (i % 10 == 0) {
+                        list += "<tr>";
+                        var j = 0;
+                    }
+                    else {
+                        j++;
+                    }
+                    list += "<td>" + data[i] + "</td>";
+                    if (j == 10) {
+                        list += "</tr>\n";
+                    }
+                }
+            }
+        });
+
+        list += "</table>";
+        return list;
     }
     
 </script>
