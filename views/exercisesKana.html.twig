@@ -88,16 +88,27 @@ form#exercises {
     });
     
     $(document).on("change", ".exercise", function(event) {
+        var countTrue = $("#countTrue").children("strong").html();
         (
             $(this).val() == $(this).next("input[type=hidden]").val() ?
-                $(this).attr("data-ctrl", true)
+                $(this).attr("data-ctrl", true).prop("disabled", true).css("opacity", 0)
                     .parent().css("background-color", "#2EFE64")
                         .children("label").css({"color" : "black", "font-weight" : ''})
+                        
+                    &&
+                
+                $(this).siblings(".showAnswer").remove()
+                
+                    &&
+                    
+                countTrue++
             :
                 $(this).attr("data-ctrl", false)
                     .parent().css("background-color", "#FA5858")
                         .children("label").css({"color" : "white", "font-weight" : "bold"})
         );
+        
+        $("#countTrue").children("strong").html(countTrue);
         
         var last = $("input.exercise").last();
         
@@ -111,7 +122,7 @@ form#exercises {
     
     $(document).on("click", ".showAnswer", function(event) {
         $(this).before("<label>" + $(this).siblings(".answer").attr("value") + "</label>");
-        $(this).siblings(".exercise").attr("data-ctrl", true)
+        $(this).siblings(".exercise").attr("data-ctrl", true).prop("disabled", true).css("opacity", 0)
                     .parent().css("background-color", "#FA5858")
                         .children("label").css({"color" : "white", "font-weight" : "bold"})
         $(this).parent().children(".exercise").prop("disabled", true);
@@ -135,16 +146,6 @@ form#exercises {
     });
     $(document).on("keyup", ".exercise", function(e) {
        if (e.keyCode === 13) { // Reload form after disabling Enter
-        (
-            $(this).val() == $(this).next("input[type=hidden]").val() ?
-                $(this).attr("data-ctrl", true)
-                    .parent().css("background-color", "#2EFE64")
-                        .children("label").css({"color" : "black", "font-weight" : ''})
-            :
-                $(this).attr("data-ctrl", false)
-                    .parent().css("background-color", "#FA5858")
-                        .children("label").css({"color" : "white", "font-weight" : "bold"})
-        );
            reloadForm();
        } 
     });
@@ -174,7 +175,6 @@ form#exercises {
     }
     
     function reloadForm() {
-        countTrueAnswers();
         var remains = $("input.exercise").length;
         $("input.exercise").each(function(idx, el) {
             if ($(el).attr("data-ctrl") == "true") { // If good answer
@@ -195,16 +195,6 @@ form#exercises {
             window.scrollTo(0,0);
             $("input.exercise:first").focus(); 
         }, 1);
-    }
-    
-    function countTrueAnswers() {
-        var count = $("#countTrue").children("strong").html();
-        $(".exercise").each(function(idx, el) {
-            if ($(el).attr("data-ctrl") == "true") { // If good answer
-                count++;
-            }
-        });
-        $("#countTrue").children("strong").html(count);
     }
     
 </script>

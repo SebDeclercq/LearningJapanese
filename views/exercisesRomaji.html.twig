@@ -25,9 +25,10 @@ form#exercises {
     color: white;
     padding: 5px;
 }
-#listCharSyllabary {
+#listKana {
     display: none;
     background-color: white;
+    opacity: 1;
     z-index: 150;
     position: fixed;
     font-size: 40px;
@@ -54,7 +55,7 @@ form#exercises {
     <input id="clear" type="radio" name="clear" value="no">No</input><br/>
 </div>
 <p></p>
-<div id="listCharSyllabary">
+<div id="listKana">
 </div>
 <form id="exercises">
 </form>
@@ -78,10 +79,49 @@ form#exercises {
         $.get("/exercises/romaji2hiragana/10", function(data) {
             createForm(data);
         });
-        var syllabary = getSyllabary($("#exerciseType").val());
-        $("#listCharSyllabary").html(syllabary);
+    });
+    
+    $(document).on("click", ".displayListKana", function(event) {
+        event.preventDefault();
+       $(this).prev(".exercise").attr("id", "tmpClicked");
+       $("#listKana").css("display",'block');
+       $(document).on("keypress", "body", function(e) {
+          if (e.keyCode == 27) {
+              $("#listKana").css("display",'none');
+              $("#tmpClicked").removeAttr("id");
+          } 
+       });
     });
 
+    $(document).on("click", ".kana", function() {
+        $("#listKana").css("display", "none");
+        $("#tmpClicked").val($(this).text());
+        var countTrue = $("#countTrue").children("strong").html();
+        
+        (
+            $("#tmpClicked").val() == $("#tmpClicked").siblings(".answer").val() ?
+                $("#tmpClicked").prop("disabled", true).css("opacity", 0)
+                    .parent().css("background-color", "#2EFE64")
+                        .children("label").css({"color" : "black", "font-weight" : ''})
+                        .siblings(".showAnswer").before("<label>" + $(this).text() + "</label>").remove()            
+                &&
+            
+            $("#tmpClicked").siblings(".displayListKana").remove()
+            
+                &&
+                
+            countTrue++                
+                        
+            :
+                $("#tmpClicked").attr("data-ctrl", false)
+                    .parent().css("background-color", "#FA5858")
+                        .children("label").css({"color" : "white", "font-weight" : "bold"})
+        
+        );
+        $("#countTrue").children("strong").html(countTrue);
+        $("#tmpClicked").removeAttr("id");
+    });
+    
     $("#exerciseType").on("change", function(event) {
         $.get("/exercises/" + $(this).val() + "/" + $("#times").val(), function(data) {
             ( $("#clear:checked").val() == "yes" ? createForm(data) : reloadForm() );
@@ -103,34 +143,13 @@ form#exercises {
         event.preventDefault();
     });
     
-    //$(document).on("change", ".exercise", function(event) {
-        //(
-            //$(this).val() == $(this).next("input[type=hidden]").val() ?
-                //$(this).attr("data-ctrl", true)
-                    //.parent().css("background-color", "#2EFE64")
-                        //.children("label").css({"color" : "black", "font-weight" : ''})
-            //:
-                //$(this).attr("data-ctrl", false)
-                    //.parent().css("background-color", "#FA5858")
-                        //.children("label").css({"color" : "white", "font-weight" : "bold"})
-        //);
-        
-        //var last = $("input.exercise").last();
-        
-        ////If last element of form, check all inputs
-        //if ($(this).is(last)) {
-            //reloadForm();
-        //}
-        
-        //event.preventDefault();
-    //});
-    
     $(document).on("click", ".showAnswer", function(event) {
         $(this).before("<label>" + $(this).siblings(".answer").attr("value") + "</label>");
         $(this).siblings(".exercise").attr("data-ctrl", true)
                     .parent().css("background-color", "#FA5858")
                         .children("label").css({"color" : "white", "font-weight" : "bold"})
-        $(this).parent().children(".exercise").prop("disabled", true);
+        $(this).parent().children(".exercise").prop("disabled", true).css("opacity", 0);
+        $(this).parent().children(".displayListKana").remove();
         $(this).remove();
         var oldCount = $("#countFalse").children("strong").html();
         $("#countFalse").children("strong").html(++oldCount);
@@ -183,15 +202,17 @@ form#exercises {
             var line = "<fieldset style='border:none'>";
             line += "<label>" + char + "</label>&nbsp;&nbsp;";
             line += "<button class='showAnswer' tabindex='1' style='float:right'>Answer</button>";
-            line += "<input class='exercise' type='text' data-ctrl='false'>";
+            line += "<input class='exercise' style='width:50%' tabindex='1' type='text' data-ctrl='false'>&nbsp;";
+            line += "<button class='displayListKana'>Kana</button>";
             line += "<input class='answer' type='hidden' value='"+data[char]+"'/><br/>";
             line += "</fieldset>";
             $("#exercises").append(line);
         }
+        var syllabary = getSyllabary($("#exerciseType").val());
+        $("#listKana").html(syllabary);
     }
     
     function reloadForm() {
-        countTrueAnswers();
         var remains = $("input.exercise").length;
         $("input.exercise").each(function(idx, el) {
             if ($(el).attr("data-ctrl") == "true") { // If good answer
@@ -208,22 +229,14 @@ form#exercises {
                 });
             }
         }
+        var syllabary = getSyllabary($("#exerciseType").val());
+        $("#listKana").html(syllabary);
         setTimeout(function() {
             window.scrollTo(0,0);
             $("input.exercise:first").focus(); 
         }, 1);
     }
-    
-    function countTrueAnswers() {
-        var count = $("#countTrue").children("strong").html();
-        $(".exercise").each(function(idx, el) {
-            if ($(el).attr("data-ctrl") == "true") { // If good answer
-                count++;
-            }
-        });
-        $("#countTrue").children("strong").html(count);
-    }
-    
+
     function getSyllabary() {
         var str = $("#exerciseType").val();
         var syllabary = str.substr(str.indexOf("2") + 1);
@@ -241,7 +254,7 @@ form#exercises {
                     else {
                         j++;
                     }
-                    list += "<td>" + data[i] + "</td>";
+                    list += "<td class='kana'>" + data[i] + "</td>";
                     if (j == 10) {
                         list += "</tr>\n";
                     }
