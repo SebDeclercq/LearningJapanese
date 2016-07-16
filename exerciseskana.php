@@ -79,10 +79,10 @@ $app->get("/exercises/{kana}/{times}", function($kana, $times) use ($app) {
 })->value("kana", "both", "times", 10);
 
 $app->get("/syllabary/{syllabary}", function($syllabary) {
-    $file = file_get_contents("resources/romaji.csv");
+    $file = file_get_contents("resources/fullKataList.csv");
     $file = rtrim($file, "\n"); // Remove trailing newline
     $list = explode("\n", $file);
-    $list = array_splice($list, 0, 46);
+    $list = array_splice($list, 0, 46); // By convenience, exercises romaji => XX are based only on simple kana characters
     shuffle($list);
     
     $results = array();
