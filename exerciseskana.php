@@ -102,25 +102,4 @@ $app->get("/syllabary/{syllabary}", function($syllabary) {
     
 });
 
-$app->get("/tmp", function() {
-    $hiragana = file_get_contents("resources/hiragana.csv");
-    $katakana = file_get_contents("resources/katakana.csv");
-    
-    $hiragana = rtrim($hiragana, "\n");
-    $katakana = rtrim($katakana, "\n");
-    
-    $hiraganaList = $katakanaList = $fullList = array();
-    
-    foreach (explode("\n", $hiragana) as $pair) {
-        list($hir, $syl) = explode(",", $pair);
-        $fullList[$syl] = $syl.','.$hir;
-    }
-    foreach (explode("\n", $katakana) as $pair) {
-        list($kat, $syl) = explode(",", $pair);
-        $fullList[$syl] .= ','.$kat;
-    }
-    
-    file_put_contents("resources/fullKataList.csv", implode("\n", $fullList));
-});
-
 $app->run();
