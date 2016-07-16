@@ -90,13 +90,13 @@ form#exercises {
     $(document).on("change", ".exercise", function(event) {
         var countTrue = $("#countTrue").children("strong").html();
         (
-            $(this).val() == $(this).next("input[type=hidden]").val() ?
+            $(this).val().toLowerCase() == $(this).next("input[type=hidden]").val() ?
                 $(this).attr("data-ctrl", true).prop("disabled", true).css("opacity", 0)
                     .parent().css("background-color", "#2EFE64")
                         .children("label").css({"color" : "black", "font-weight" : ''})
                     &&
                 
-                $(this).siblings(".showAnswer").before("<label>" + $(this).val() + "</label>").remove()
+                $(this).siblings(".showAnswer").before("<label>" + $(this).val().toLowerCase() + "</label>").remove()
                 
                     &&
                     
@@ -149,9 +149,9 @@ form#exercises {
        } 
     });
     $(document).on("keypress", ".exercise:last", function(e) {
-        e.preventDefault();
         if (e.keyCode === 9) { // Tab
-           reloadForm();
+            e.preventDefault();
+            reloadForm();
        }
     });
     

@@ -31,51 +31,47 @@ $app->get("/exercisesRomaji", function() use ($app) {
 });
 
 $app->get("/exercises/{kana}/{times}", function($kana, $times) use ($app) {
-    switch($kana) {
-        case "hiragana" :
-        case "hiragana2romaji" :
-        $file = file_get_contents("resources/hiragana.csv"); break;
-        case "katakana" :
-        case "katakana2romaji" :
-        $file = file_get_contents("resources/katakana.csv"); break;
-        case "romaji2hiragana" :
-        case "romaji2katakana" :
-        $file = file_get_contents("resources/romaji.csv"); break;
-        case "hiraganaAndKatakana2romaji" :
-        default : // both
-        $file = file_get_contents("resources/hiragana.csv");
-        $file .= file_get_contents("resources/katakana.csv");
-        break;
-    }
-
+    $file = file_get_contents("resources/fullKataList.csv");
     $file = rtrim($file, "\n"); // Remove trailing newline
     $list = explode("\n", $file);
-    shuffle($list);
+
+    if (preg_match("/^romaji/", $kana)) { // By convenience, exercises romaji => XX are based only on simple kana characters
+        $list = array_splice($list, 0, 46);
+    }   
+
+    $tmpResults = $results = array();
+    
+    foreach ($list as $triplet) {
+        list($romaji, $hiragana, $katakana) = explode(",", $triplet);
+        switch($kana) {
+            case "hiragana" : case "hiragana2romaji" :
+                $tmpResults[$hiragana] = $romaji; break;
+            case "katakana" : case "katakana2romaji" :
+                $tmpResults[$katakana] = $romaji; break;
+            case "romaji2hiragana" :
+                $tmpResults[$romaji] = $hiragana; break;
+            case "romaji2katakana" :
+                $tmpResults[$romaji] = $katakana; break;
+            case "hiraganaAndKatakana2romaji" :  default : // both
+                $tmpResults[$hiragana] = $romaji;
+                $tmpResults[$katakana] = $romaji;
+                break;
+        }
+    }
+
+    $keys = array_keys($tmpResults);
+    shuffle($keys);
+    foreach ($keys as $key) {
+        $results[$key] = $tmpResults[$key]; // Shuffle associative array
+    }
+
     if (!preg_match("/^\d+/", $times) || $times < 1) {
         $times = 10;
     }
-    if ($times < count($list)) {
-        $list = array_slice($list, 0, $times);
+    if ($times < count($results)) {
+        $results = array_slice($results, 0, $times);
     }
-        
-    $results = array();
 
-    if (!preg_match("/^romaji/", $kana)) {
-        foreach ($list as $pair) {
-            list($k, $v) = explode(",", $pair);
-            $results[$k] = $v;
-        }
-    }
-    else {
-        foreach ($list as $triplet) {
-            list($romaji, $hiragana, $katakana) = explode(",", $triplet);
-            switch ($kana) {
-                case "romaji2hiragana" : $results[$romaji] = $hiragana; break;
-                case "romaji2katakana" : $results[$romaji] = $katakana; break;
-            }
-        }
-    }
-    
     $response = new JsonResponse($results);
     $response->headers->set('Content-Type', 'application/json; charset=utf-8');
     return $response;
@@ -86,6 +82,7 @@ $app->get("/syllabary/{syllabary}", function($syllabary) {
     $file = file_get_contents("resources/romaji.csv");
     $file = rtrim($file, "\n"); // Remove trailing newline
     $list = explode("\n", $file);
+    $list = array_splice($list, 0, 46);
     shuffle($list);
     
     $results = array();
@@ -103,6 +100,27 @@ $app->get("/syllabary/{syllabary}", function($syllabary) {
     $response->headers->set('Content-Type', 'application/json; charset=utf-8');
     return $response;    
     
+});
+
+$app->get("/tmp", function() {
+    $hiragana = file_get_contents("resources/hiragana.csv");
+    $katakana = file_get_contents("resources/katakana.csv");
+    
+    $hiragana = rtrim($hiragana, "\n");
+    $katakana = rtrim($katakana, "\n");
+    
+    $hiraganaList = $katakanaList = $fullList = array();
+    
+    foreach (explode("\n", $hiragana) as $pair) {
+        list($hir, $syl) = explode(",", $pair);
+        $fullList[$syl] = $syl.','.$hir;
+    }
+    foreach (explode("\n", $katakana) as $pair) {
+        list($kat, $syl) = explode(",", $pair);
+        $fullList[$syl] .= ','.$kat;
+    }
+    
+    file_put_contents("resources/fullKataList.csv", implode("\n", $fullList));
 });
 
 $app->run();
