@@ -39,6 +39,23 @@ form#exercises {
     margin-top: -15%; /* Negative half of height. */
     margin-left: -25%; /* Negative half of width. */
 }
+td.kana { // Effet bombé
+    top: 0px;
+	left: 5%;
+	width: 90%;
+	height: 50px;
+	border-radius: 125px / 12px;
+	box-shadow: 0 0 8px #555;
+}
+td.kana:nth-child(even) {
+    background-color: #8a8a5c;
+}
+td.kana:nth-child(odd) {
+    background-color: #ccccb3;
+}
+td.kana:hover {
+    color: white;
+}
 </style>
 {% endblock %}
 {% block body %}

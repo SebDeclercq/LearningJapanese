@@ -16,6 +16,12 @@ if (preg_match("/\/public\/.+/", $_SERVER['REQUEST_URI'])) { // If contains rout
     }
 }
 
+$app->get("/", function() use ($app) {
+   $html =  "<div><a href='/exercisesKana'>Training : kana to romaji</a><br/>";
+   $html .= "<a href='/exercisesRomaji'>Training : romaji to kana</a></div>";
+   return $html;
+});
+
 $app->get("/exercisesKana", function() use ($app) {
     return $app['twig']->render('exercisesKana.html.twig');
 });

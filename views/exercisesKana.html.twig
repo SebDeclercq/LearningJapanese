@@ -94,10 +94,9 @@ form#exercises {
                 $(this).attr("data-ctrl", true).prop("disabled", true).css("opacity", 0)
                     .parent().css("background-color", "#2EFE64")
                         .children("label").css({"color" : "black", "font-weight" : ''})
-                        
                     &&
                 
-                $(this).siblings(".showAnswer").remove()
+                $(this).siblings(".showAnswer").before("<label>" + $(this).val() + "</label>").remove()
                 
                     &&
                     
