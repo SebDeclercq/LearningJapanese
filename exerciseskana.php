@@ -102,4 +102,8 @@ $app->get("/syllabary/{syllabary}", function($syllabary) {
     
 });
 
+//~ $app->get("/tmp", function() use ($app) {
+    //~ return $app['twig']->render('tmp.html.twig');
+//~ });
+
 $app->run();

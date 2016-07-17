@@ -67,9 +67,11 @@ td.kana:hover {
     </select>
     <input id="times" type="text" value="10" name="times" size="1"></input>
     &nbsp;&nbsp;<button id="go">Go</button><br/>
+{#
     <label>Clear form ?</label>
     <input id="clear" type="radio" name="clear" value="yes">Yes</input>
     <input id="clear" type="radio" name="clear" value="no">No</input><br/>
+#}
 </div>
 <p></p>
 <div id="listKana">
@@ -83,8 +85,6 @@ td.kana:hover {
 {% endblock %}
 
 {% block javascripts %}
-<script type="text/javascript" src="/public/jquery.js"></script>
-{#<script type="text/javascript" src="https://code.jquery.com/jquery-3.0.0.slim.min.js"></script>#}
 <script type="text/javascript">
          /* EVENTS */
     /* ******************* */
@@ -92,7 +92,7 @@ td.kana:hover {
     $(document).ready(function() {
         $("option[value='romaji2hiragana']").prop("selected", true);
         $("#times").val(10);
-        $("#clear[value=no]").prop("checked", true);
+        //$("#clear[value=no]").prop("checked", true);
         $.get("/exercises/romaji2hiragana/10", function(data) {
             createForm(data);
         });
@@ -101,6 +101,10 @@ td.kana:hover {
     $(document).on("click", ".displayListKana", function(event) {
         event.preventDefault();
        $(this).prev(".exercise").attr("id", "tmpClicked");
+       var last = $(".displayListKana").last();
+       if ($(this).is(last)) {
+           $(this).prev(".exercise").attr("data-lastInput", true);
+       }
        $("#listKana").css("display",'block');
        $(document).on("keypress", "body", function(e) {
           if (e.keyCode == 27) {
@@ -117,7 +121,7 @@ td.kana:hover {
         
         (
             $("#tmpClicked").val() == $("#tmpClicked").siblings(".answer").val() ?
-                $("#tmpClicked").prop("disabled", true).css("opacity", 0)
+                $("#tmpClicked").prop("disabled", true).css("opacity", 0).attr("data-ctrl", true)
                     .parent().css("background-color", "#2EFE64")
                         .children("label").css({"color" : "black", "font-weight" : ''})
                         .siblings(".showAnswer").before("<label>" + $(this).text() + "</label>").remove()            
@@ -135,29 +139,48 @@ td.kana:hover {
                         .children("label").css({"color" : "white", "font-weight" : "bold"})
         
         );
+        
         $("#countTrue").children("strong").html(countTrue);
-        $("#tmpClicked").removeAttr("id");
+        
+        (
+            $("#tmpClicked").attr("data-lastInput") == "true" ?
+
+                $("#tmpClicked").removeAttr("data-lastInput").removeAttr("id")
+                &&
+                reloadForm()
+            :
+            
+                $("#tmpClicked").removeAttr("id")
+        )
+
     });
     
     $("#exerciseType").on("change", function(event) {
         $.get("/exercises/" + $(this).val() + "/" + $("#times").val(), function(data) {
-            ( $("#clear:checked").val() == "yes" ? createForm(data) : reloadForm() );
+            createForm(data);
         });
         event.preventDefault();
     });
 
     $("#times").on("change", function(event) {
         $.get("/exercises/" + $("#exerciseType").val() + "/" + $(this).val(), function(data) {
-            ( $("#clear:checked").val() == "yes" ? createForm(data) : reloadForm() );
+            createForm(data);
         });
         event.preventDefault();
+    });
+    
+    $("#times").on("keyup", function(e) {
+        if (e.keyCode === 13) { // Enter
+        $.get("/exercises/" + $("#exerciseType").val() + "/" + $("#times").val(), function(data) {
+            createForm(data);
+        });
+       }
     });
 
     $("#go").on("click", function(event) {
         $.get("/exercises/" + $("#exerciseType").val() + "/" + $("#times").val(), function(data) {
-            ( $("#clear:checked").val() == "yes" ? createForm(data) : reloadForm() );
+            createForm(data);
         });
-        event.preventDefault();
     });
     
     $(document).on("click", ".showAnswer", function(event) {
@@ -173,38 +196,10 @@ td.kana:hover {
         event.preventDefault();
     });
     
-    $("#times").on("keyup", function(e) {
-        if (e.keyCode === 13) { // Enter
-        $.get("/exercises/" + $("#exerciseType").val() + "/" + $("#times").val(), function(data) {
-            ( $("#clear:checked").val() == "yes" ? createForm(data) : reloadForm() );
-        });
-       }
-    });
     $(document).on("keypress", ".exercise", function(e) {
        if (e.keyCode === 13) { // Disable Enter in form
            return false;
        } 
-    });
-    $(document).on("keyup", ".exercise", function(e) {
-       if (e.keyCode === 13) { // Reload form after disabling Enter
-        (
-            $(this).val() == $(this).next("input[type=hidden]").val() ?
-                $(this).attr("data-ctrl", true)
-                    .parent().css("background-color", "#2EFE64")
-                        .children("label").css({"color" : "black", "font-weight" : ''})
-            :
-                $(this).attr("data-ctrl", false)
-                    .parent().css("background-color", "#FA5858")
-                        .children("label").css({"color" : "white", "font-weight" : "bold"})
-        );
-           reloadForm();
-       } 
-    });
-    $(document).on("keypress", ".exercise:last", function(e) {
-        e.preventDefault();
-        if (e.keyCode === 9) { // Tab
-           reloadForm();
-       }
     });
     
          /* FUNCTIONS */
